@@ -1,0 +1,58 @@
+# -----------------------------------------------------------
+#  Hidden tooling / editor configs
+#  (ignore everything dot-prefixed except this file)
+# -----------------------------------------------------------
+.*
+!.gitignore
+
+# -----------------------------------------------------------
+#  Credentialed MIMIC-IV-ED data & large derived artifacts
+#  (PhysioNet DUA forbids public redistribution of data
+#   and its row-level derivatives; also > GitHub 100 MB limit)
+# -----------------------------------------------------------
+*.parquet
+data/*.parquet
+dataset/
+*.csv.gz
+
+# -----------------------------------------------------------
+#  Python
+# -----------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# Raw run logs (contain absolute paths; curated reports live in logs/*.md)
+*.log
+
+# -----------------------------------------------------------
+#  OS / editor / office temp files
+# -----------------------------------------------------------
+~$*
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# -----------------------------------------------------------
+#  Assignment-provided file (not our own work)
+# -----------------------------------------------------------
+IE516-project-2026.pptx
+
+# -----------------------------------------------------------
+#  Presentation & internal notes (kept locally, not part of the code repo)
+# -----------------------------------------------------------
+PPM_Presentation.pptx
+PPM_Presentation_Script.md
+scripts/make_presentation.py
+PPM_Research_Report.md
+data_inventory.md
+candidate_event_sources.md
+event_abstraction_rules.md
+data/feature_dictionary.md
+logs/
