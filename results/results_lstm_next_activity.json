@@ -1,0 +1,70 @@
+{
+  "model": "LSTM",
+  "task": "next_activity",
+  "max_len": 20,
+  "epochs_run": 8,
+  "best_val_f1_macro": 0.6088,
+  "test": {
+    "accuracy": 0.4582,
+    "f1_weighted": 0.4447,
+    "f1_macro": 0.6334
+  },
+  "per_class": {
+    "ED_ARRIVAL": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 4.0
+    },
+    "TRIAGE": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 70.0
+    },
+    "VITAL_SIGN_REASSESSMENT": {
+      "precision": 0.6453126972106525,
+      "recall": 0.38381776808126306,
+      "f1-score": 0.48134320673839304,
+      "support": 213135.0
+    },
+    "MEDICATION_RECONCILIATION": {
+      "precision": 0.42217309082818844,
+      "recall": 0.7403948154560862,
+      "f1-score": 0.53773163010029,
+      "support": 82013.0
+    },
+    "MEDICATION_DISPENSED": {
+      "precision": 0.41202663100691383,
+      "recall": 0.235530906163342,
+      "f1-score": 0.29972627973279936,
+      "support": 122969.0
+    },
+    "ED_END": {
+      "precision": 0.34940058344630803,
+      "recall": 0.7732156320683589,
+      "f1-score": 0.4813078400985573,
+      "support": 63664.0
+    },
+    "accuracy": 0.45820838218966287,
+    "macro avg": {
+      "precision": 0.6381521670820104,
+      "recall": 0.6888265202948416,
+      "f1-score": 0.63335149277834,
+      "support": 481855.0
+    },
+    "weighted avg": {
+      "precision": 0.5087570844982404,
+      "recall": 0.45820838218966287,
+      "f1-score": 0.4446671545840546,
+      "support": 481855.0
+    }
+  },
+  "hyperparams": {
+    "hidden": 128,
+    "layers": 2,
+    "dropout": 0.3,
+    "lr": 0.001,
+    "batch": 512
+  }
+}

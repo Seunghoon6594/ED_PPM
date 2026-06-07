@@ -1,0 +1,20 @@
+{
+  "model": "LSTM",
+  "task": "remaining_time",
+  "max_len": 20,
+  "epochs_run": 9,
+  "best_val_mae_hours": 3.5951,
+  "test": {
+    "mae_hours": 3.5804,
+    "rmse_hours": 6.4599,
+    "mape_pct": 80.8111
+  },
+  "hyperparams": {
+    "hidden": 128,
+    "layers": 2,
+    "dropout": 0.3,
+    "lr": 0.001,
+    "batch": 512,
+    "loss": "SmoothL1"
+  }
+}

@@ -12,6 +12,7 @@
 # -----------------------------------------------------------
 *.parquet
 data/*.parquet
+*.npz
 dataset/
 *.csv.gz
 
@@ -55,4 +56,5 @@ data_inventory.md
 candidate_event_sources.md
 event_abstraction_rules.md
 data/feature_dictionary.md
+paper_sections_draft.md
 logs/

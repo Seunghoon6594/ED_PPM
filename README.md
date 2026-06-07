@@ -9,6 +9,9 @@ clinical tables into an event log and trains models for two standard PPM tasks:
 - Task 2 - Remaining-time prediction: given the events so far, predict the
   time remaining until the patient leaves the ED (regression).
 
+Each task is solved with rule-based baselines, a LightGBM model on hand-crafted
+prefix features, and an LSTM over the raw event sequence.
+
 The core of the project is the event-log abstraction: turning five raw
 clinical tables into a clean, leakage-safe activity sequence per visit.
 
@@ -20,13 +23,18 @@ clinical tables into a clean, leakage-safe activity sequence per visit.
 │   └── pipeline_config.py        # all paths, filters, and hyperparameters
 ├── scripts/
 │   ├── preprocessing/
-│   │   ├── build_event_log.py    # raw tables  -> event_log_master.parquet
-│   │   ├── make_prefix_dataset.py# event log   -> prefix datasets
-│   │   └── feature_engineering.py# prefixes     -> textual features
+│   │   ├── build_event_log.py     # raw tables -> event_log_master.parquet
+│   │   ├── make_prefix_dataset.py # event log  -> structured prefix datasets
+│   │   ├── make_sequence_dataset.py # event log -> LSTM sequence dataset
+│   │   └── feature_engineering.py # prefixes   -> textual features
 │   └── analysis/
 │       ├── check_event_log_quality.py
-│       ├── train_next_activity.py  # Task 1
-│       └── train_remaining_time.py # Task 2
+│       ├── train_next_activity.py       # Task 1: baselines + LightGBM
+│       ├── train_remaining_time.py      # Task 2: baselines + LightGBM
+│       ├── lstm_ppm.py                  # shared LSTM model / data loader
+│       ├── train_lstm_next_activity.py  # Task 1: LSTM
+│       ├── train_lstm_remaining_time.py # Task 2: LSTM
+│       └── compare_models.py            # combined comparison table + figure
 ├── data/                         # event_log_statistics.csv (parquet outputs are regenerated)
 ├── figures/                      # event-log diagnostics
 ├── models/                       # trained LightGBM models
@@ -81,11 +89,19 @@ python scripts/preprocessing/make_prefix_dataset.py
 # 4. Feature engineering (textual prefixes)
 python scripts/preprocessing/feature_engineering.py
 
-# 5. Task 1 - next-activity prediction
+# 5. Task 1 - next-activity prediction (baselines + LightGBM)
 python scripts/analysis/train_next_activity.py
 
-# 6. Task 2 - remaining-time prediction
+# 6. Task 2 - remaining-time prediction (baselines + LightGBM)
 python scripts/analysis/train_remaining_time.py
+
+# 7. LSTM models (build sequence dataset, then train both tasks)
+python scripts/preprocessing/make_sequence_dataset.py
+python scripts/analysis/train_lstm_next_activity.py
+python scripts/analysis/train_lstm_remaining_time.py
+
+# 8. Combined comparison table + figure
+python scripts/analysis/compare_models.py
 ```
 
 Each script reads its inputs and writes its outputs to the locations defined in
@@ -123,6 +139,12 @@ Task 1 - Next-activity prediction
 | Most-frequent baseline | 0.442 | 0.271 | 0.102 |
 | Last-event baseline | 0.458 | 0.340 | 0.338 |
 | LightGBM | 0.486 | 0.383 | 0.328 |
+| LSTM | 0.458 | 0.445 | 0.633 |
+
+The LSTM roughly doubles F1-macro (0.633 vs 0.328) and raises the recall of the
+clinically important `ED_END` (visit-end) class from 0.05 to 0.77, while accuracy
+stays level with the last-event baseline (the dominant vital-sign class caps raw
+accuracy).
 
 Task 2 - Remaining-time prediction
 
@@ -131,6 +153,11 @@ Task 2 - Remaining-time prediction
 | Global-mean baseline | 4.293 | 6.505 | 155.3 |
 | Last-event-mean baseline | 4.270 | 6.483 | 151.4 |
 | LightGBM | 3.965 | 6.206 | 130.4 |
+| LSTM | 3.580 | 6.460 | 80.8 |
+
+The LSTM lowers MAE by ~10% over LightGBM and roughly halves MAPE (it is far more
+accurate near discharge, where remaining time is small); its RMSE is marginally
+higher because of larger residuals on the extreme long-stay tail.
 
 ## Configuration
 
