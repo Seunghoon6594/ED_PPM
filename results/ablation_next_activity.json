@@ -1,0 +1,23 @@
+{
+  "epochs": 2,
+  "full": {
+    "accuracy": 0.4207,
+    "f1_weighted": 0.3947,
+    "f1_macro": 0.6155
+  },
+  "no_static": {
+    "accuracy": 0.4363,
+    "f1_weighted": 0.4247,
+    "f1_macro": 0.6214
+  },
+  "no_time": {
+    "accuracy": 0.3948,
+    "f1_weighted": 0.3628,
+    "f1_macro": 0.596
+  },
+  "seq_only": {
+    "accuracy": 0.4083,
+    "f1_weighted": 0.3923,
+    "f1_macro": 0.6001
+  }
+}
