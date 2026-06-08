@@ -5,3 +5,4 @@ lightgbm>=3.3.0
 matplotlib>=3.5.0
 pyarrow>=10.0.0
 torch>=2.0.0
+tabpfn>=2.0,<3

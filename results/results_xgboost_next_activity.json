@@ -1,0 +1,9 @@
+{
+  "model": "XGBoost",
+  "task": "next_activity",
+  "test": {
+    "accuracy": 0.3945,
+    "f1_weighted": 0.3679,
+    "f1_macro": 0.5703
+  }
+}

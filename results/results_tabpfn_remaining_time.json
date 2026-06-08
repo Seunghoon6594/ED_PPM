@@ -1,0 +1,11 @@
+{
+  "model": "TabPFN",
+  "task": "remaining_time",
+  "train_subsample": 3000,
+  "test_n": 20000,
+  "test": {
+    "mae_hours": 3.9228,
+    "rmse_hours": 6.3146,
+    "mape_pct": 123.1138
+  }
+}

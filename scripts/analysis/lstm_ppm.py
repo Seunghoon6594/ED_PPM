@@ -66,6 +66,7 @@ def build_tensors(npz_path, max_len=DEFAULT_MAX_LEN):
         "ids": ids, "delta": delta, "lengths": tlen.astype(np.int64),
         "static": static, "y_next": y_next, "y_rem_h": y_rem_h,
         "split": p_split, "static_cols": static_cols,
+        "prefix_len": p_k.astype(np.int64),  # true prefix length k (for earliness analysis)
     }
 
 

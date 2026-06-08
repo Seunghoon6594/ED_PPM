@@ -1,0 +1,9 @@
+{
+  "model": "XGBoost",
+  "task": "remaining_time",
+  "test": {
+    "mae_hours": 3.6104,
+    "rmse_hours": 6.5036,
+    "mape_pct": 81.6501
+  }
+}

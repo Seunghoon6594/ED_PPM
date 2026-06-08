@@ -1,0 +1,11 @@
+{
+  "model": "TabPFN",
+  "task": "next_activity",
+  "train_subsample": 3000,
+  "test_n": 20000,
+  "test": {
+    "accuracy": 0.4802,
+    "f1_weighted": 0.3843,
+    "f1_macro": 0.3423
+  }
+}

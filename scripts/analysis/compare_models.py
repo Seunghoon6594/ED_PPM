@@ -30,33 +30,49 @@ def load(path):
 
 def main():
     r1 = load(os.path.join(cfg.RESULTS_DIR, "results_next_activity.json")) or {}
+    r1_xgb = load(os.path.join(cfg.RESULTS_DIR, "results_xgboost_next_activity.json"))
     r1_lstm = load(os.path.join(cfg.RESULTS_DIR, "results_lstm_next_activity.json"))
+    r1_tab = load(os.path.join(cfg.RESULTS_DIR, "results_tabpfn_next_activity.json"))
     r2 = load(os.path.join(cfg.RESULTS_DIR, "results_remaining_time.json")) or {}
+    r2_xgb = load(os.path.join(cfg.RESULTS_DIR, "results_xgboost_remaining_time.json"))
     r2_lstm = load(os.path.join(cfg.RESULTS_DIR, "results_lstm_remaining_time.json"))
+    r2_tab = load(os.path.join(cfg.RESULTS_DIR, "results_tabpfn_remaining_time.json"))
 
     # ---- Task 1 rows ----
     t1 = []
     for key, name in [("most_frequent_baseline", "Most-frequent baseline"),
-                      ("last_event_baseline", "Last-event baseline"),
-                      ("lightgbm", "LightGBM")]:
+                      ("last_event_baseline", "Last-event baseline")]:
         if key in r1:
             t = r1[key]["test"]
             t1.append((name, t["accuracy"], t["f1_weighted"], t["f1_macro"]))
+    if r1_xgb:
+        t = r1_xgb["test"]
+        t1.append(("XGBoost", t["accuracy"], t["f1_weighted"], t["f1_macro"]))
     if r1_lstm:
         t = r1_lstm["test"]
         t1.append(("LSTM", t["accuracy"], t["f1_weighted"], t["f1_macro"]))
+    if r1_tab:
+        t = r1_tab["test"]
+        lbl = f"TabPFN ({r1_tab['train_subsample']//1000}k/{r1_tab['test_n']//1000}k)*"
+        t1.append((lbl, t["accuracy"], t["f1_weighted"], t["f1_macro"]))
 
     # ---- Task 2 rows ----
     t2 = []
     for key, name in [("global_mean_baseline", "Global-mean baseline"),
-                      ("last_event_mean_baseline", "Last-event-mean baseline"),
-                      ("lightgbm", "LightGBM")]:
+                      ("last_event_mean_baseline", "Last-event-mean baseline")]:
         if key in r2:
             t = r2[key]["test"]
             t2.append((name, t["mae_hours"], t["rmse_hours"], t["mape_pct"]))
+    if r2_xgb:
+        t = r2_xgb["test"]
+        t2.append(("XGBoost", t["mae_hours"], t["rmse_hours"], t["mape_pct"]))
     if r2_lstm:
         t = r2_lstm["test"]
         t2.append(("LSTM", t["mae_hours"], t["rmse_hours"], t["mape_pct"]))
+    if r2_tab:
+        t = r2_tab["test"]
+        lbl = f"TabPFN ({r2_tab['train_subsample']//1000}k/{r2_tab['test_n']//1000}k)*"
+        t2.append((lbl, t["mae_hours"], t["rmse_hours"], t["mape_pct"]))
 
     # ---- markdown ----
     md = ["# Model Comparison (test set)", "",
@@ -70,6 +86,11 @@ def main():
            "|-------|---------|----------|----------|"]
     for name, mae, rmse, mp in t2:
         md.append(f"| {name} | {mae:.3f} | {rmse:.3f} | {mp:.1f} |")
+    if r1_tab or r2_tab:
+        md += ["", "*TabPFN is fit on a small training subsample and evaluated on a "
+               "test subsample (CPU in-context inference cost); all other models use "
+               "the full training data and full test set, so TabPFN is a no-tuning "
+               "reference point rather than a like-for-like row."]
     md_path = os.path.join(cfg.RESULTS_DIR, "model_comparison.md")
     open(md_path, "w").write("\n".join(md) + "\n")
     print("\n".join(md))

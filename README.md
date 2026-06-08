@@ -9,8 +9,9 @@ clinical tables into an event log and trains models for two standard PPM tasks:
 - Task 2 - Remaining-time prediction: given the events so far, predict the
   time remaining until the patient leaves the ED (regression).
 
-Each task is solved with rule-based baselines, a LightGBM model on hand-crafted
-prefix features, and an LSTM over the raw event sequence.
+Each task is solved with rule-based baselines, gradient-boosted trees (XGBoost)
+and TabPFN on hand-crafted prefix features, and an LSTM over the raw event
+sequence.
 
 The core of the project is the event-log abstraction: turning five raw
 clinical tables into a clean, leakage-safe activity sequence per visit.
@@ -29,16 +30,21 @@ clinical tables into a clean, leakage-safe activity sequence per visit.
 │   │   └── feature_engineering.py # prefixes   -> textual features
 │   └── analysis/
 │       ├── check_event_log_quality.py
-│       ├── train_next_activity.py       # Task 1: baselines + LightGBM
-│       ├── train_remaining_time.py      # Task 2: baselines + LightGBM
+│       ├── train_next_activity.py       # Task 1: rule-based baselines
+│       ├── train_remaining_time.py      # Task 2: rule-based baselines
+│       ├── train_xgboost.py             # XGBoost (both tasks)
+│       ├── train_tabpfn.py              # TabPFN (both tasks, subsampled)
 │       ├── lstm_ppm.py                  # shared LSTM model / data loader
 │       ├── train_lstm_next_activity.py  # Task 1: LSTM
 │       ├── train_lstm_remaining_time.py # Task 2: LSTM
+│       ├── train_lstm_ablation.py       # LSTM input ablation (Task 1)
+│       ├── analyze_predictions.py       # earliness, acuity subgroups, bootstrap CIs
+│       ├── make_process_map.py          # directly-follows transition heatmap
 │       └── compare_models.py            # combined comparison table + figure
 ├── data/                         # event_log_statistics.csv (parquet outputs are regenerated)
-├── figures/                      # event-log diagnostics
-├── models/                       # trained LightGBM models
-├── results/                      # metrics, confusion matrix, feature importance, plots
+├── figures/                      # event-log diagnostics, comparison + analysis plots
+├── models/                       # trained XGBoost and LSTM models
+├── results/                      # metrics, comparison tables, analysis outputs
 └── requirements.txt
 ```
 
@@ -49,7 +55,7 @@ pip install -r requirements.txt
 ```
 
 Python 3.9+ is recommended. Key dependencies: pandas, numpy, scikit-learn,
-lightgbm, matplotlib, pyarrow.
+xgboost, tabpfn, torch, matplotlib, pyarrow.
 
 ## Data
 
@@ -89,19 +95,24 @@ python scripts/preprocessing/make_prefix_dataset.py
 # 4. Feature engineering (textual prefixes)
 python scripts/preprocessing/feature_engineering.py
 
-# 5. Task 1 - next-activity prediction (baselines + LightGBM)
+# 5. Rule-based baselines (both tasks)
 python scripts/analysis/train_next_activity.py
-
-# 6. Task 2 - remaining-time prediction (baselines + LightGBM)
 python scripts/analysis/train_remaining_time.py
 
-# 7. LSTM models (build sequence dataset, then train both tasks)
+# 6. Tabular models on the structured prefix features
+python scripts/analysis/train_xgboost.py
+python scripts/analysis/train_tabpfn.py        # subsampled (CPU in-context cost)
+
+# 7. LSTM over the raw event sequence
 python scripts/preprocessing/make_sequence_dataset.py
 python scripts/analysis/train_lstm_next_activity.py
 python scripts/analysis/train_lstm_remaining_time.py
 
-# 8. Combined comparison table + figure
+# 8. Comparison + post-hoc analyses + process map
 python scripts/analysis/compare_models.py
+python scripts/analysis/analyze_predictions.py   # earliness, acuity, bootstrap CIs
+python scripts/analysis/train_lstm_ablation.py   # LSTM input ablation
+python scripts/analysis/make_process_map.py
 ```
 
 Each script reads its inputs and writes its outputs to the locations defined in
@@ -138,13 +149,15 @@ Task 1 - Next-activity prediction
 |-------|----------|-------------|----------|
 | Most-frequent baseline | 0.442 | 0.271 | 0.102 |
 | Last-event baseline | 0.458 | 0.340 | 0.338 |
-| LightGBM | 0.486 | 0.383 | 0.328 |
+| XGBoost | 0.395 | 0.368 | 0.570 |
+| TabPFN (3k/20k subsample) | 0.480 | 0.384 | 0.342 |
 | LSTM | 0.458 | 0.445 | 0.633 |
 
-The LSTM roughly doubles F1-macro (0.633 vs 0.328) and raises the recall of the
-clinically important `ED_END` (visit-end) class from 0.05 to 0.77, while accuracy
-stays level with the last-event baseline (the dominant vital-sign class caps raw
-accuracy).
+The LSTM leads on both accuracy and F1-macro: it beats the balanced XGBoost on
+both axes and reaches recall ~0.77 on the clinically important `ED_END`
+(visit-end) class. Its advantage holds at every prefix length and is larger for
+high-acuity (severe) patients (see `figures/earliness_next_activity.png`,
+`figures/acuity_subgroup.png`).
 
 Task 2 - Remaining-time prediction
 
@@ -152,15 +165,20 @@ Task 2 - Remaining-time prediction
 |-------|---------|----------|----------|
 | Global-mean baseline | 4.293 | 6.505 | 155.3 |
 | Last-event-mean baseline | 4.270 | 6.483 | 151.4 |
-| LightGBM | 3.965 | 6.206 | 130.4 |
+| XGBoost | 3.610 | 6.504 | 81.7 |
+| TabPFN (3k/20k subsample) | 3.923 | 6.315 | 123.1 |
 | LSTM | 3.580 | 6.460 | 80.8 |
 
-The LSTM lowers MAE by ~10% over LightGBM and roughly halves MAPE (it is far more
-accurate near discharge, where remaining time is small); its RMSE is marginally
-higher because of larger residuals on the extreme long-stay tail.
+For remaining time the LSTM and the MAE-objective XGBoost are practically
+comparable (~3.6 h MAE, ~81% MAPE), both ~10% better than the best baseline:
+sequence modelling helps Task 1 substantially but Task 2 only marginally.
+
+TabPFN is fit on a 3,000-row training subsample and evaluated on a 20,000-row
+test subsample (CPU in-context inference cost), so it is a no-tuning reference
+point rather than a like-for-like row.
 
 ## Configuration
 
-All parameters (paths, LOS filters, split ratios, LightGBM hyperparameters,
+All parameters (paths, LOS filters, split ratios, model hyperparameters,
 random seed) are centralized in `configs/pipeline_config.py`. The random seed is
 fixed at 42 for reproducibility.
