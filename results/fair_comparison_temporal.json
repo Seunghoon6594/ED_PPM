@@ -1,0 +1,42 @@
+{
+  "config": {
+    "split": "temporal",
+    "pool": 50000,
+    "test": 757,
+    "ctx": 256
+  },
+  "next_activity": {
+    "XGBoost": {
+      "accuracy": 0.5667,
+      "f1_weighted": 0.5414,
+      "f1_macro": 0.6064
+    },
+    "Vanilla_TabPFN": {
+      "accuracy": 0.3342,
+      "f1_weighted": 0.2876,
+      "f1_macro": 0.2186
+    },
+    "RA_TabPFN": {
+      "accuracy": 0.502,
+      "f1_weighted": 0.4798,
+      "f1_macro": 0.6046
+    }
+  },
+  "remaining_time": {
+    "XGBoost": {
+      "mae_hours": 3.5375,
+      "rmse_hours": 6.0173,
+      "mape_pct": 89.2349
+    },
+    "Vanilla_TabPFN": {
+      "mae_hours": 4.031,
+      "rmse_hours": 6.1621,
+      "mape_pct": 134.4861
+    },
+    "RA_TabPFN": {
+      "mae_hours": 3.8384,
+      "rmse_hours": 5.9023,
+      "mape_pct": 127.8735
+    }
+  }
+}

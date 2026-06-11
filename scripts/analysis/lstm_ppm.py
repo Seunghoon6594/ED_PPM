@@ -67,6 +67,8 @@ def build_tensors(npz_path, max_len=DEFAULT_MAX_LEN):
         "static": static, "y_next": y_next, "y_rem_h": y_rem_h,
         "split": p_split, "static_cols": static_cols,
         "prefix_len": p_k.astype(np.int64),  # true prefix length k (for earliness analysis)
+        "case_idx": p_case.astype(np.int64),  # per-prefix case index (for temporal split)
+        "n_cases": int(len(offsets) - 1),
     }
 
 
