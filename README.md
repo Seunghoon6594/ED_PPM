@@ -11,7 +11,8 @@ clinical tables into an event log and trains models for two standard PPM tasks:
 
 Each task is solved with rule-based baselines, gradient-boosted trees (XGBoost)
 and TabPFN on hand-crafted prefix features, and an LSTM over the raw event
-sequence.
+sequence. We also introduce RA-TabPFN, a training-free retrieval-augmented
+adaptation of the TabPFN tabular foundation model for PPM.
 
 The core of the project is the event-log abstraction: turning five raw
 clinical tables into a clean, leakage-safe activity sequence per visit.
@@ -38,6 +39,8 @@ clinical tables into a clean, leakage-safe activity sequence per visit.
 │       ├── train_lstm_next_activity.py  # Task 1: LSTM
 │       ├── train_lstm_remaining_time.py # Task 2: LSTM
 │       ├── train_lstm_ablation.py       # LSTM input ablation (Task 1)
+│       ├── train_processpfn.py          # RA-TabPFN 2x2 ablation (features x retrieval)
+│       ├── fair_comparison.py           # matched-test comparison incl. RA-TabPFN
 │       ├── analyze_predictions.py       # earliness, acuity subgroups, bootstrap CIs
 │       ├── make_process_map.py          # directly-follows transition heatmap
 │       └── compare_models.py            # combined comparison table + figure
@@ -108,7 +111,11 @@ python scripts/preprocessing/make_sequence_dataset.py
 python scripts/analysis/train_lstm_next_activity.py
 python scripts/analysis/train_lstm_remaining_time.py
 
-# 8. Comparison + post-hoc analyses + process map
+# 8. RA-TabPFN (our model): retrieval-augmented TabPFN + matched comparison
+python scripts/analysis/train_processpfn.py      # 2x2 ablation (features x retrieval)
+python scripts/analysis/fair_comparison.py       # same-test comparison incl. RA-TabPFN
+
+# 9. Comparison + post-hoc analyses + process map
 python scripts/analysis/compare_models.py
 python scripts/analysis/analyze_predictions.py   # earliness, acuity, bootstrap CIs
 python scripts/analysis/train_lstm_ablation.py   # LSTM input ablation
@@ -176,6 +183,22 @@ sequence modelling helps Task 1 substantially but Task 2 only marginally.
 TabPFN is fit on a 3,000-row training subsample and evaluated on a 20,000-row
 test subsample (CPU in-context inference cost), so it is a no-tuning reference
 point rather than a like-for-like row.
+
+RA-TabPFN (our model) - matched-test next-activity comparison (n=738 common test,
+training-free, 50k reference pool, context 256; `figures/fair_comparison.png`):
+
+| Model | Accuracy | F1-macro |
+|-------|----------|----------|
+| Vanilla TabPFN (no training) | 0.331 | 0.202 |
+| RA-TabPFN (ours, no training) | 0.497 | 0.455 |
+| XGBoost (trained) | 0.562 | 0.497 |
+| LSTM (trained) | 0.551 | 0.653 |
+
+A 2x2 ablation (`figures/processpfn_ablation.png`) shows retrieval is the
+effective adaptation (F1-macro 0.202 -> 0.455 with zero training); hand-crafted
+sequence features do not help. RA-TabPFN is not state-of-the-art - the trained
+LSTM leads on F1-macro - but it shows a training-free foundation model can reach
+the neighbourhood of trained models on clinical PPM.
 
 ## Configuration
 

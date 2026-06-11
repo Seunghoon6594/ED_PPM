@@ -1,0 +1,29 @@
+{
+  "config": {
+    "pool": 50000,
+    "test": 738,
+    "ctx": 256,
+    "decay": 0.6,
+    "n_estimators": 1
+  },
+  "vanilla_tabpfn": {
+    "accuracy": 0.3306,
+    "f1_weighted": 0.2719,
+    "f1_macro": 0.2015
+  },
+  "tabpfn_knn": {
+    "accuracy": 0.4973,
+    "f1_weighted": 0.4836,
+    "f1_macro": 0.4547
+  },
+  "seq_tabpfn": {
+    "accuracy": 0.3171,
+    "f1_weighted": 0.2214,
+    "f1_macro": 0.1641
+  },
+  "processpfn": {
+    "accuracy": 0.4973,
+    "f1_weighted": 0.4795,
+    "f1_macro": 0.4517
+  }
+}
